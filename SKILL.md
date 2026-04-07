@@ -223,46 +223,52 @@ Agent: "以下任务将被修改：
 ```
 📋 KinemaTasks Daily Report — {M月D日}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 昨日变动（{昨日M/D} → {今日M/D}）
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🆕 新增 (N)
- TASK-XXXXX 标题 | 优先级 | 领域
-
-🔄 状态变更 (N)
- TASK-XXXXX 旧状态 → 新状态
-
-📝 字段变更 (N)
- TASK-XXXXX 字段 旧值 → 新值
-
-🗑 取消 (N)
- TASK-XXXXX 标题
+{2-3句话状况摘要，包含：新增/完成数量、紧急任务提醒、过期任务提醒等}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 当前任务状况
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔴 Urgent
- [状态] TASK-XXXXX 标题 | due: MM-DD | 领域
+ 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days left | 领域
 
 🟡 Normal
- [状态] TASK-XXXXX 标题 | due: MM-DD | 领域
+ 【In Progress】 TASK-XXXXX 标题 | due: MM-DD · due today | 领域
+ 【Pending】 TASK-XXXXX 标题 | — | 领域
 
 🟢 Low
- [状态] TASK-XXXXX 标题 | — | 领域
+ 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days left | 领域
 
 💤 Snoozed
- [Snoozed] TASK-XXXXX 标题 | 领域
+ 【Snoozed】 TASK-XXXXX 标题 | due: MM-DD · N days overdue | 领域
 
 ⏰ 已过期
- [状态] TASK-XXXXX 标题 | due: MM-DD | 超期 N天 ⚠️ | 领域
+ 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days overdue ⚠️ | 领域
 
 ✅ 最近完成
  TASK-XXXXX 标题 | completed: MM-DD
 
 共 N 个活跃任务 | N In Progress · N Pending · N Snoozed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 昨日变动（{昨日M/D} → {今日M/D}）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+新增 (N)
+ TASK-XXXXX 标题 | 优先级 | 领域
+
+状态变更 (N)
+ TASK-XXXXX 旧状态 → 新状态
+
+字段变更 (N)
+ TASK-XXXXX 字段 旧值 → 新值
+
+取消 (N)
+ TASK-XXXXX 标题
 ```
+
+> 昨日变动部分不使用 emoji 前缀，仅用纯文字标题。
+> 状况摘要由 Agent 根据任务数据生成 2-3 句话，无需固定模板。
 
 ### Diff 计算规则
 
@@ -280,14 +286,24 @@ Agent: "以下任务将被修改：
 
 ### 当日任务状况分组
 
-| Section | 分组依据 |
-|---------|---------|
-| 🔴 Urgent | 优先级 = urgent |
-| 🟡 Normal | 优先级 = normal |
-| 🟢 Low | 优先级 = low |
-| 💤 Snoozed | 状态 = Snoozed |
-| ⏰ 已过期 | 截止日期 < 今天，超期 >7天标 ⚠️ |
-| ✅ 最近完成 | archived/ 中 Done 任务，最近 5 条，Cancelled 不展示 |
+| Section | 包含 | 排除 | 排序 |
+|---------|------|------|------|
+| 🔴 Urgent | 优先级 = urgent，未过期 | Snoozed 状态 | 剩余时间升序（最紧急排前），无截止日期排末尾 |
+| 🟡 Normal | 优先级 = normal，未过期 | Snoozed 状态 | 同上 |
+| 🟢 Low | 优先级 = low，未过期 | Snoozed 状态 | 同上 |
+| 💤 Snoozed | 状态 = Snoozed（无论是否过期） | 无 | 剩余时间升序，无截止日期排末尾 |
+| ⏰ 已过期 | Pending/InProgress + 已过期 | Snoozed 状态 | 过期天数降序（过期最久排前） |
+| ✅ 最近完成 | archived/ 中 Done 任务 | Cancelled | 完成时间倒序，最近 5 条 |
+
+**状态标签使用全角括号**：`【Pending】`、`【In Progress】`、`【Snoozed】`
+
+**时间提示格式**：
+- 未过期有截止日期：`due: MM-DD · N days left`
+- 今天截止：`due: MM-DD · due today`
+- 已过期：`due: MM-DD · N days overdue`（超 7 天追加 ⚠️）
+- 无截止日期：`—`（不显示时间提示）
+
+**核心规则**：Snoozed 状态优先，即使过期也不出现在「已过期」中。
 
 ---
 
