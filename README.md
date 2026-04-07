@@ -34,4 +34,4 @@ kinema-tasks/
 
 ## 许可
 
-MIT
+GPL v3
