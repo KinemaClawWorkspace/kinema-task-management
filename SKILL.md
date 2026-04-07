@@ -4,7 +4,7 @@ displayName: "Kinema's Task Management (daily report, active push, traceback)"
 version: 1.0.0
 description: |
   Kinema personal task tracking system. AI Agent maintains tasks as markdown files in workspace.
-  Trigger: User describes tasks, mentions "任务", "task", asks to create/update/archive/check tasks, or receives task-related cron heartbeat.
+  Trigger: User describes tasks, mentions "任务", "task", asks to create/update/archive/check tasks, uses `/mytask`, or receives task-related cron heartbeat.
 ---
 
 # Kinema's Task Management | Kinema 个人任务追踪系统
@@ -286,12 +286,14 @@ Agent: "以下任务将被修改：
 
 #### 手动查询流程
 
-触发：用户询问"看看任务"、"任务列表"、"任务报告"等
+触发：用户输入 `/mytask`、询问"看看任务"、"任务列表"、"任务报告"等
 
 1. Agent 扫描 `active/` 和 `archived/` 中所有任务文件
 2. 按 SKILL.md 中的推送格式生成完整报告
 3. **由模型撰写 2-3 句摘要**（基于各 section 统计）
 4. 直接在对话中返回报告，无需调用 cron
+
+> `/mytask` 可直接触发手动查询，无需额外参数。
 
 > `report.sh` 输出的是不含摘要的结构化部分（当前任务状况 + 昨日变动）。摘要由 Agent 模型根据 `report.sh` 的输出内容自行撰写。
 
