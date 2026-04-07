@@ -223,36 +223,28 @@ Agent: "以下任务将被修改：
 ```
 📋 KinemaTasks Daily Report — {M月D日}
 
-{2-3句话状况摘要，由模型根据下方各 section 内容生成，非固定模板}
+{2-3句话状况摘要，由模型根据下方 section 内容生成，非固定模板}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 当前任务状况
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: ▶ in_progress ○ pending ✓ done
 
-🔴 Urgent
- 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days left | 领域
+● URGENT ────────────────────────────────────────────────────────────
+▶ TASK-XXXXX Apr 09 2d left 标题 #领域
+○ TASK-XXXXX Apr 10 3d left 标题 #领域
 
-🟡 Normal
- 【In Progress】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · due today | 领域
- 【Pending】 TASK-XXXXX 标题 | — | 领域
+● NORMAL ────────────────────────────────────────────────────────────
+○ TASK-XXXXX Apr 11 4d left 标题 #领域
+✓ TASK-XXXXX Apr 06 done 标题 #领域
 
-🟢 Low
- 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days left | 领域
+● LOW ────────────────────────────────────────────────────────────────
+○ TASK-XXXXX — 标题 #领域
 
-💤 Snoozed
- 【Snoozed】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days overdue | 领域
+● SNOOZED ────────────────────────────────────────────────────────────
+○ TASK-XXXXX Apr 12 5d left 标题 #领域
 
-⏰ 已过期
- 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days overdue ⚠️ | 领域
+● EXPIRED ────────────────────────────────────────────────────────────
+○ TASK-XXXXX Apr 01 6d overdue 标题 #领域
 
-✅ 最近完成
- TASK-XXXXX 标题 | completed: MM-DD
-
-共 N 个活跃任务 | N In Progress · N Pending · N Snoozed
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 昨日变动（{昨日M/D} → {今日M/D}）
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+───────────────────────────────────────────────────────────────────────
 
 新增 (N)
  TASK-XXXXX 标题 | 优先级 | 领域
@@ -267,7 +259,23 @@ Agent: "以下任务将被修改：
  TASK-XXXXX 标题
 ```
 
-> 昨日变动部分不使用 emoji 前缀，仅用纯文字标题。
+### 状态图例
+
+| 符号 | 状态 |
+|------|------|
+| ▶ | In Progress |
+| ○ | Pending / Snoozed |
+| ✓ | Done |
+
+### 条目格式
+
+每行格式：`{符号} TASK-XXXXX {日期} {时间提示} {标题} #{领域}`
+
+- 日期：`Apr 09` 格式，无截止日期显示 `—`
+- 时间提示：`Nd left` / `due today` / `Nd overdue` / `done`（仅已完成任务）/ 无（无截止日期）
+- 领域：`#领域` 格式
+
+> 最近完成的 Done 任务（最近 5 条）直接显示在其优先级 section 中，带 ✓ 符号和完成日期，不再单独列出。Cancelled 不展示。
 
 ### 触发方式
 
@@ -315,22 +323,22 @@ Agent: "以下任务将被修改：
 
 | Section | 包含 | 排除 | 排序 |
 |---------|------|------|------|
-| 🔴 Urgent | 优先级 = urgent，未过期 | Snoozed 状态 | 剩余时间升序（最紧急排前），无截止日期排末尾 |
-| 🟡 Normal | 优先级 = normal，未过期 | Snoozed 状态 | 同上 |
-| 🟢 Low | 优先级 = low，未过期 | Snoozed 状态 | 同上 |
-| 💤 Snoozed | 状态 = Snoozed（无论是否过期） | 无 | 剩余时间升序，无截止日期排末尾 |
-| ⏰ 已过期 | Pending/InProgress + 已过期 | Snoozed 状态 | 过期天数降序（过期最久排前） |
-| ✅ 最近完成 | archived/ 中 Done 任务 | Cancelled | 完成时间倒序，最近 5 条 |
+| ● URGENT | 优先级 = urgent，未过期 | Snoozed 状态 | 剩余时间升序，无截止日期排末尾 |
+| ● NORMAL | 优先级 = normal，未过期 | Snoozed 状态 | 同上 |
+| ● LOW | 优先级 = low，未过期 | Snoozed 状态 | 同上 |
+| ● SNOOZED | 状态 = Snoozed（无论是否过期） | 无 | 剩余时间升序，无截止日期排末尾 |
+| ● EXPIRED | Pending/InProgress + 已过期 | Snoozed 状态 | 过期天数降序（过期最久排前） |
 
-**状态标签使用全角括号**：`【Pending】`、`【In Progress】`、`【Snoozed】`
+最近完成（archived/ 中最近 5 条 Done 任务）按原优先级显示在各 section 内，带 ✓ 符号，Cancelled 不展示。
 
 **时间提示格式**：
-- 未过期有截止日期：`Due: YYYY-MM-DD · N days left`
-- 今天截止：`Due: YYYY-MM-DD · due today`
-- 已过期：`Due: YYYY-MM-DD · N days overdue`（超 7 天追加 ⚠️）
-- 无截止日期：`—`（不显示时间提示）
+- 未过期有截止日期：`Nd left`（如 `2d left`）
+- 今天截止：`due today`
+- 已过期：`Nd overdue`（不再追加 ⚠️）
+- 已完成：`done`
+- 无截止日期：不显示时间提示
 
-**核心规则**：Snoozed 状态优先，即使过期也不出现在「已过期」中。
+**核心规则**：Snoozed 状态优先，即使过期也不出现在「EXPIRED」中。
 
 ---
 
