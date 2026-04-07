@@ -18,7 +18,7 @@ TASK_ID="$1"
 TITLE="$2"
 PRIORITY="$3"
 DOMAIN="$4"
-DUE_DATE="${5:—}"
+DUE_DATE="${5:-—}"
 DESCRIPTION="${6:-}"
 TODAY=$(date +%Y-%m-%d)
 
