@@ -36,7 +36,33 @@ ls -d ~/.openclaw/workspace/kinema-tasks/active ~/.openclaw/workspace/kinema-tas
 
 期望输出：三个目录路径。
 
-## Step 2: 安装辅助脚本
+## Step 2: 确定推送通道
+
+### 说明
+
+Cron 任务需要指定推送目标。Agent 从当前 session 的 **Inbound Context（untrusted metadata）** 中提取当前通道信息：
+
+- `provider` → `--channel`（如 `discord`、`telegram`、`signal`）
+- `sender.id` → `--to`（如 `1335162939614953546`）
+
+提取到当前值后，**必须询问用户确认推送目标**：
+
+```
+"当前对话通道：{channel}，目标用户：{sender_id}
+推送目标使用当前通道和用户，还是指定其他对象？"
+```
+
+### 安装
+
+根据用户回复确定最终值：
+- 用户确认当前通道 → 直接使用提取到的值
+- 用户指定其他对象 → 使用用户提供的 `--channel` 和 `--to`
+
+记录最终值，后续 Step 4 创建 cron 时使用。
+
+> ⚠️ 如果当前 session 没有 inbound metadata（如纯 CLI 环境），必须询问用户提供 `channel` 和 `to`。
+
+## Step 3: 安装辅助脚本
 
 ### 检测
 
@@ -62,9 +88,9 @@ chmod +x ~/.openclaw/workspace/skills/kinema-task-management/scripts/*.sh
 ~/.openclaw/workspace/skills/kinema-task-management/scripts/next-id.sh
 ```
 
-期望输出：`TASK-00001`
+期望输出：下一个可用任务 ID（如 `TASK-00001`）
 
-## Step 3: 配置 Cron 任务
+## Step 4: 配置 Cron 任务
 
 ### 检测
 
@@ -76,9 +102,9 @@ openclaw cron list 2>&1 | grep -i "kinema-tasks"
 
 ### 安装
 
-**依次创建以下三个 cron 任务：**
+**依次创建以下三个 cron 任务（将 `CHANNEL` 和 `TO_ID` 替换为 Step 2 获取的实际值）：**
 
-#### 3.1 归档检查（每天 09:00 北京时间）
+#### 4.1 归档检查（每天 09:00 北京时间）
 
 ```bash
 openclaw cron add \
@@ -86,12 +112,14 @@ openclaw cron add \
   --cron "0 9 * * *" \
   --tz Asia/Shanghai \
   --session isolated \
+  --channel <CHANNEL> \
+  --to <TO_ID> \
   --announce \
   --timeout-seconds 120 \
-  --message "执行 KinemaTasks 归档检查：读取 ~/.openclaw/workspace/kinema-task-management/SKILL.md 了解规范。扫描 ~/.openclaw/workspace/kinema-tasks/active/ 中所有 TASK-*.md 文件，检查 Metadata 表中'状态'字段。如果状态为 Done 或 Cancelled：1) 更新该文件的'最后更新'为今天日期（YYYY-MM-DD）2) 在 Changelog 追加记录（如 'YYYY-MM-DD 状态变更: Done → 移入 archived'）3) 将文件从 active/ 移动到 archived/。完成后输出归档摘要，如无需归档则输出'无待归档任务'。"
+  --message "执行 KinemaTasks 归档检查：读取 ~/.openclaw/workspace/skills/kinema-task-management/SKILL.md 了解规范。扫描 ~/.openclaw/workspace/kinema-tasks/active/ 中所有 TASK-*.md 文件，检查 Metadata 表中'状态'字段。如果状态为 Done 或 Cancelled：1) 更新该文件的'最后更新'为今天日期（YYYY-MM-DD）2) 在 Changelog 追加记录（如 'YYYY-MM-DD 状态变更: Done → 移入 archived'）3) 将文件从 active/ 移动到 archived/。完成后输出归档摘要，如无需归档则输出'无待归档任务'。"
 ```
 
-#### 3.2 每日早报（每天 09:01 北京时间）
+#### 4.2 每日早报（每天 09:01 北京时间）
 
 ```bash
 openclaw cron add \
@@ -99,12 +127,14 @@ openclaw cron add \
   --cron "1 9 * * *" \
   --tz Asia/Shanghai \
   --session isolated \
+  --channel <CHANNEL> \
+  --to <TO_ID> \
   --announce \
   --timeout-seconds 180 \
-  --message "执行 KinemaTasks 每日早报推送。读取 ~/.openclaw/workspace/kinema-task-management/SKILL.md 了解完整规范。1) 读取 ~/.openclaw/workspace/kinema-tasks/snapshots/ 中最近一次快照文件（按文件名日期倒序取最新的）2) 扫描 ~/.openclaw/workspace/kinema-tasks/active/ 所有 TASK-*.md 读取 Metadata（标题、状态、优先级、领域、截止日期）3) 对比最近快照与当前 active 状态生成 diff（新增、状态变更、字段变更、取消）4) 扫描 ~/.openclaw/workspace/kinema-tasks/archived/ 获取最近 5 条状态为 Done 的任务 5) 按 SKILL.md 中的推送格式生成完整报告。注意：如果没有最近快照则跳过 diff 部分。日期使用北京时间。"
+  --message "执行 KinemaTasks 每日早报推送。读取 ~/.openclaw/workspace/skills/kinema-task-management/SKILL.md 了解完整规范。1) 读取 ~/.openclaw/workspace/kinema-tasks/snapshots/ 中最近一次快照文件（按文件名日期倒序取最新的）2) 扫描 ~/.openclaw/workspace/kinema-tasks/active/ 所有 TASK-*.md 读取 Metadata（标题、状态、优先级、领域、截止日期）3) 对比最近快照与当前 active 状态生成 diff（新增、状态变更、字段变更、取消）4) 扫描 ~/.openclaw/workspace/kinema-tasks/archived/ 获取最近 5 条状态为 Done 的任务 5) 按 SKILL.md 中的推送格式生成完整报告。注意：如果没有最近快照则跳过 diff 部分。日期使用北京时间。"
 ```
 
-#### 3.3 写入快照（每天 09:02 北京时间）
+#### 4.3 写入快照（每天 09:02 北京时间）
 
 ```bash
 openclaw cron add \
@@ -112,13 +142,18 @@ openclaw cron add \
   --cron "2 9 * * *" \
   --tz Asia/Shanghai \
   --session isolated \
+  --channel <CHANNEL> \
+  --to <TO_ID> \
+  --announce \
   --timeout-seconds 120 \
-  --message "执行 KinemaTasks 快照写入：读取 ~/.openclaw/workspace/kinema-task-management/SKILL.md 了解规范。1) 扫描 ~/.openclaw/workspace/kinema-tasks/active/ 中所有 TASK-*.md 文件 2) 读取每个文件的 Metadata（标题、状态、优先级、领域、截止日期）3) 按 SKILL.md 中的快照格式生成 markdown 4) 写入 ~/.openclaw/workspace/kinema-tasks/snapshots/YYYY-MM-DD.md（使用今天北京时间日期）。输出写入确认和任务摘要统计。"
+  --message "执行 KinemaTasks 快照写入：读取 ~/.openclaw/workspace/skills/kinema-task-management/SKILL.md 了解规范。1) 扫描 ~/.openclaw/workspace/kinema-tasks/active/ 中所有 TASK-*.md 文件 2) 读取每个文件的 Metadata（标题、状态、优先级、领域、截止日期）3) 按 SKILL.md 中的快照格式生成 markdown 4) 写入 ~/.openclaw/workspace/kinema-tasks/snapshots/YYYY-MM-DD.md（使用今天北京时间日期）。输出写入确认和任务摘要统计。"
 ```
 
 > **注意**：
+> - `<CHANNEL>` 和 `<TO_ID>` 必须替换为 Step 2 获取的实际值
 > - 三个 cron 使用 `--session isolated` 在独立 session 中运行，避免污染主 session 历史
-> - `--announce` 将结果推送到对话通道
+> - `--announce` 将结果推送到指定通道
+> - `--channel` 指定推送通道类型，`--to` 指定目标用户 ID
 > - `--tz Asia/Shanghai` 直接使用北京时间（09:00），无需手动计算 UTC
 > - 三个 cron 间隔 1 分钟（09:00 → 09:01 → 09:02），确保顺序执行
 
@@ -128,9 +163,9 @@ openclaw cron add \
 openclaw cron list 2>&1 | grep -i "kinema-tasks"
 ```
 
-期望输出：显示三条 cron 记录，标签分别为 `kinema-tasks-archive-check`、`kinema-tasks-daily-report`、`kinema-tasks-write-snapshot`。
+期望输出：显示三条 cron 记录，名称分别为 `kinema-tasks-archive-check`、`kinema-tasks-daily-report`、`kinema-tasks-write-snapshot`。
 
-## Step 4: 最终验证
+## Step 5: 最终验证
 
 ```bash
 # 检查目录
@@ -153,6 +188,7 @@ openclaw cron list 2>&1 | grep "kinema-tasks"
 | `openclaw cron: command not found` | OpenClaw 版本不支持 cron | 升级 OpenClaw 到支持 cron 的版本 |
 | `Permission denied` 脚本 | 脚本无执行权限 | `chmod +x scripts/*.sh` |
 | cron 未执行 | cron 服务未启动 | 检查 OpenClaw gateway 状态：`openclaw gateway status`，检查 cron 列表：`openclaw cron list` |
-| 目录不存在 | Step 1 未执行 | 重新执行 `mkdir -p ~/.openclaw/workspace/kinema-tasks/{active,archived,snapshots}` |
-| 推送未到达对话 | 缺少 `--announce` | 重新创建 cron 任务，确保包含 `--announce` 参数 |
+| 目录不存在 | Step 1 未执行 | 重新执行 `mkdir -p` 创建三个目录（见 Step 1） |
+| 推送未到达对话 | 缺少 `--channel` 或 `--to` | 重新创建 cron 任务，确保包含 `--channel` 和 `--to` 参数 |
 | cron 参数格式错误 | 版本差异 | 运行 `openclaw cron add --help` 确认当前版本支持的参数 |
+| `cron run` 用 name 报错 | 需要用 UUID | 用 `openclaw cron list --json` 获取 job id |
