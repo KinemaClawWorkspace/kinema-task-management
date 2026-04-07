@@ -246,6 +246,11 @@ Status: ▶ in_progress ○ pending ✓ done
 
 ───────────────────────────────────────────────────────────────────────
 
+● RECENTLY DONE ───────────────────────────────────────────────────────
+✓ TASK-XXXXX Apr 06 done 标题 #领域
+
+───────────────────────────────────────────────────────────────────────
+
 新增 (N)
  TASK-XXXXX 标题 | 优先级 | 领域
 
@@ -275,7 +280,7 @@ Status: ▶ in_progress ○ pending ✓ done
 - 时间提示：`Nd left` / `due today` / `Nd overdue` / `done`（仅已完成任务）/ 无（无截止日期）
 - 领域：`#领域` 格式
 
-> 最近完成的 Done 任务（最近 5 条）直接显示在其优先级 section 中，带 ✓ 符号和完成日期，不再单独列出。Cancelled 不展示。
+> 最近完成的 Done 任务单独列出在「RECENTLY DONE」section，最近 5 条，按完成时间倒序，Cancelled 不展示。
 
 ### 触发方式
 
@@ -328,8 +333,9 @@ Status: ▶ in_progress ○ pending ✓ done
 | ● LOW | 优先级 = low，未过期 | Snoozed 状态 | 同上 |
 | ● SNOOZED | 状态 = Snoozed（无论是否过期） | 无 | 剩余时间升序，无截止日期排末尾 |
 | ● EXPIRED | Pending/InProgress + 已过期 | Snoozed 状态 | 过期天数降序（过期最久排前） |
+| ● RECENTLY DONE | archived/ 中最近 5 条 Done 任务 | Cancelled | 完成时间倒序 |
 
-最近完成（archived/ 中最近 5 条 Done 任务）按原优先级显示在各 section 内，带 ✓ 符号，Cancelled 不展示。
+最近完成的 Done 任务单独列出在「RECENTLY DONE」section，最近 5 条，按完成时间倒序，Cancelled 不展示。
 
 **时间提示格式**：
 - 未过期有截止日期：`Nd left`（如 `2d left`）

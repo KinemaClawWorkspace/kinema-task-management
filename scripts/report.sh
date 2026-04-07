@@ -91,13 +91,68 @@ if [ -d "$ACTIVE_DIR" ]; then
   done
 fi
 
-# --- Collect recently done (last 5, as fake active entries for inline display) ---
-done_data=""
+# --- Collect cancelled task IDs ---
+declare -A cancelled_tasks
+if [ -d "$ARCHIVE_DIR" ]; then
+  for f in "$ARCHIVE_DIR"/TASK-*.md; do
+    [ -f "$f" ] || continue
+    tid=$(basename "$f" .md)
+    st=$(grep "^| 状态 | " "$f" | sed 's/^| 状态 | \(.*\) |$/\1/')
+    [ "$st" = "Cancelled" ] && cancelled_tasks["$tid"]=1
+  done
+fi
+
+# --- Classify active tasks (not done) ---
+declare -a urgent_list normal_list low_list snoozed_list expired_list
+
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  tid=$(echo "$line" | cut -d'|' -f1)
+  title=$(echo "$line" | cut -d'|' -f2)
+  status=$(echo "$line" | cut -d'|' -f3)
+  priority=$(echo "$line" | cut -d'|' -f4)
+  domain=$(echo "$line" | cut -d'|' -f5)
+  due=$(echo "$line" | cut -d'|' -f6)
+
+  sym=$(status_sym "$status")
+  hint=$(time_hint "$due" "0")
+  key=$(sort_key "$due")
+  date_str=$(fmt_date "$due")
+
+  hint_part=""
+  [ -n "$hint" ] && hint_part=" ${hint}"
+  entry="${sym} ${tid} ${date_str}${hint_part} ${title} #${domain}"
+
+  if [ "$status" = "Snoozed" ]; then
+    snoozed_list+=("${key}|${entry}")
+  else
+    is_expired=0
+    [ "$due" != "—" ] && [ -n "$due" ] && [ "$TODAY" \> "$due" ] && is_expired=1
+    if [ "$is_expired" -eq 1 ]; then
+      expired_list+=("${key}|${entry}")
+    else
+      case "$priority" in
+        urgent) urgent_list+=("${key}|${entry}") ;;
+        normal) normal_list+=("${key}|${entry}") ;;
+        low) low_list+=("${key}|${entry}") ;;
+      esac
+    fi
+  fi
+done <<< "$tasks_data"
+
+# --- Collect recently done (last 5, separate section) ---
+declare -a done_list
 if [ -d "$ARCHIVE_DIR" ]; then
   while IFS= read -r line; do
     [ -z "$line" ] && continue
-    done_data="${done_data}${line}
-"
+    tid=$(echo "$line" | cut -d'|' -f1)
+    title=$(echo "$line" | cut -d'|' -f2)
+    priority=$(echo "$line" | cut -d'|' -f4)
+    domain=$(echo "$line" | cut -d'|' -f5)
+    last_upd=$(echo "$line" | cut -d'|' -f6)
+    date_str=$(fmt_date "$last_upd")
+    entry="✓ ${tid} ${date_str} done ${title} #${domain}"
+    done_list+=("${entry}")
   done < <(
     for f in "$ARCHIVE_DIR"/TASK-*.md; do
       [ -f "$f" ] || continue
@@ -116,68 +171,6 @@ if [ -d "$ARCHIVE_DIR" ]; then
     done | sort -t'|' -k6 -r | head -5
   )
 fi
-
-# --- Collect cancelled task IDs ---
-declare -A cancelled_tasks
-if [ -d "$ARCHIVE_DIR" ]; then
-  for f in "$ARCHIVE_DIR"/TASK-*.md; do
-    [ -f "$f" ] || continue
-    tid=$(basename "$f" .md)
-    st=$(grep "^| 状态 | " "$f" | sed 's/^| 状态 | \(.*\) |$/\1/')
-    [ "$st" = "Cancelled" ] && cancelled_tasks["$tid"]=1
-  done
-fi
-
-# --- Classify all tasks ---
-declare -a urgent_list normal_list low_list snoozed_list expired_list
-
-for src_data in "$tasks_data" "$done_data"; do
-  [ -z "$src_data" ] && continue
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    tid=$(echo "$line" | cut -d'|' -f1)
-    title=$(echo "$line" | cut -d'|' -f2)
-    status=$(echo "$line" | cut -d'|' -f3)
-    priority=$(echo "$line" | cut -d'|' -f4)
-    domain=$(echo "$line" | cut -d'|' -f5)
-    due=$(echo "$line" | cut -d'|' -f6)
-
-    sym=$(status_sym "$status")
-    is_done=0; [ "$status" = "Done" ] && is_done=1
-    hint=$(time_hint "$due" "$is_done")
-    key=$(sort_key "$due")
-    date_str=$(fmt_date "$due")
-
-    # Build entry: "key|full_line"
-    hint_part=""
-    [ -n "$hint" ] && hint_part=" ${hint}"
-    entry="${sym} ${tid} ${date_str}${hint_part} ${title} #${domain}"
-
-    # Classify
-    if [ "$status" = "Snoozed" ]; then
-      snoozed_list+=("${key}|${entry}")
-    elif [ "$is_done" -eq 1 ]; then
-      # Done: show in priority section, sort by due desc (most recent first = smallest negative key)
-      case "$priority" in
-        urgent) urgent_list+=("${key}|${entry}") ;;
-        normal) normal_list+=("${key}|${entry}") ;;
-        low) low_list+=("${key}|${entry}") ;;
-      esac
-    else
-      is_expired=0
-      [ "$due" != "—" ] && [ -n "$due" ] && [ "$TODAY" \> "$due" ] && is_expired=1
-      if [ "$is_expired" -eq 1 ]; then
-        expired_list+=("${key}|${entry}")
-      else
-        case "$priority" in
-          urgent) urgent_list+=("${key}|${entry}") ;;
-          normal) normal_list+=("${key}|${entry}") ;;
-          low) low_list+=("${key}|${entry}") ;;
-        esac
-      fi
-    fi
-  done <<< "$src_data"
-done
 
 # --- Stats ---
 in_progress=0
@@ -241,6 +234,15 @@ print_section "NORMAL" "${normal_list[@]}"
 print_section "LOW" "${low_list[@]}"
 print_section "SNOOZED" "${snoozed_list[@]}"
 print_section_desc "EXPIRED" "${expired_list[@]}"
+
+# Recently done (no sort key, already sorted by completion date desc)
+if [ ${#done_list[@]} -gt 0 ]; then
+  echo "● RECENTLY DONE ${SEP:16}"
+  for entry in "${done_list[@]}"; do
+    echo "$entry"
+  done
+  echo ""
+fi
 
 echo "${SEP}"
 echo ""
