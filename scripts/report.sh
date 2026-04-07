@@ -133,12 +133,12 @@ while IFS= read -r line; do
 
   due_display=""
   if [ "$due" != "—" ] && [ -n "$due" ]; then
-    due_display=$(TZ=Asia/Shanghai date -d "$due" +"%-m-%-d" 2>/dev/null || echo "$due")
+    due_display="$due"
   fi
 
   # Build entry: "key|status_label|entry_text"
   if [ "$due_display" != "" ]; then
-    entry=" 【${status}】 ${tid} ${title} | due: ${due_display}${hint} | ${domain}"
+    entry=" 【${status}】 ${tid} ${title} | Due: ${due_display}${hint} | ${domain}"
   else
     entry=" 【${status}】 ${tid} ${title} | — | ${domain}"
   fi

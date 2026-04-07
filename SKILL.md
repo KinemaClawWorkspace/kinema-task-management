@@ -230,20 +230,20 @@ Agent: "以下任务将被修改：
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔴 Urgent
- 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days left | 领域
+ 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days left | 领域
 
 🟡 Normal
- 【In Progress】 TASK-XXXXX 标题 | due: MM-DD · due today | 领域
+ 【In Progress】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · due today | 领域
  【Pending】 TASK-XXXXX 标题 | — | 领域
 
 🟢 Low
- 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days left | 领域
+ 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days left | 领域
 
 💤 Snoozed
- 【Snoozed】 TASK-XXXXX 标题 | due: MM-DD · N days overdue | 领域
+ 【Snoozed】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days overdue | 领域
 
 ⏰ 已过期
- 【Pending】 TASK-XXXXX 标题 | due: MM-DD · N days overdue ⚠️ | 领域
+ 【Pending】 TASK-XXXXX 标题 | Due: YYYY-MM-DD · N days overdue ⚠️ | 领域
 
 ✅ 最近完成
  TASK-XXXXX 标题 | completed: MM-DD
@@ -325,9 +325,9 @@ Agent: "以下任务将被修改：
 **状态标签使用全角括号**：`【Pending】`、`【In Progress】`、`【Snoozed】`
 
 **时间提示格式**：
-- 未过期有截止日期：`due: MM-DD · N days left`
-- 今天截止：`due: MM-DD · due today`
-- 已过期：`due: MM-DD · N days overdue`（超 7 天追加 ⚠️）
+- 未过期有截止日期：`Due: YYYY-MM-DD · N days left`
+- 今天截止：`Due: YYYY-MM-DD · due today`
+- 已过期：`Due: YYYY-MM-DD · N days overdue`（超 7 天追加 ⚠️）
 - 无截止日期：`—`（不显示时间提示）
 
 **核心规则**：Snoozed 状态优先，即使过期也不出现在「已过期」中。
