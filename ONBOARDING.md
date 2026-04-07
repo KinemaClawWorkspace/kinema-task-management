@@ -21,13 +21,17 @@ ls -d ~/.openclaw/workspace/kinema-tasks/active ~/.openclaw/workspace/kinema-tas
 ### 安装
 
 ```bash
-mkdir -p ~/.openclaw/workspace/kinema-tasks/{active,archived,snapshots}
+mkdir -p ~/.openclaw/workspace/kinema-tasks/active
+mkdir -p ~/.openclaw/workspace/kinema-tasks/archived
+mkdir -p ~/.openclaw/workspace/kinema-tasks/snapshots
 ```
+
+> ⚠️ 不要使用 brace expansion（`{a,b,c}`），部分 shell 环境不支持。
 
 ### 验证
 
 ```bash
-ls -d ~/.openclaw/workspace/kinema-tasks/{active,archived,snapshots}
+ls -d ~/.openclaw/workspace/kinema-tasks/active ~/.openclaw/workspace/kinema-tasks/archived ~/.openclaw/workspace/kinema-tasks/snapshots
 ```
 
 期望输出：三个目录路径。
