@@ -40,27 +40,41 @@ ls -d ~/.openclaw/workspace/kinema-tasks/active ~/.openclaw/workspace/kinema-tas
 
 ### 说明
 
-Cron 任务需要指定推送目标。Agent 从当前 session 的 **Inbound Context（untrusted metadata）** 中提取当前通道信息：
+Cron 任务通过 `--channel` 和 `--to` 指定推送目标。不同通道的 `--to` 格式不同：
 
-- `provider` → `--channel`（如 `discord`、`telegram`、`signal`）
-- `sender.id` → `--to`（如 `1335162939614953546`）
+| 通道 | `--channel` 值 | `--to` 格式 | 来源 |
+|------|---------------|------------|------|
+| Discord | `discord` | `channel:{chat_id}` | Inbound metadata 的 `chat_id` 字段 |
+| Telegram | `telegram` | Telegram chat ID | Inbound metadata 的 `chat_id` 字段 |
+| Signal | `signal` | E.164 电话号码 | Inbound metadata 的 `chat_id` 字段 |
 
-提取到当前值后，**必须询问用户确认推送目标**：
+> ⚠️ **不要使用 `sender.id`**，`--to` 需要的是 `chat_id`（通道对话 ID），不是用户 ID。
+
+### 提取方法
+
+从当前 session 的 **Inbound Context（untrusted metadata）** JSON 中提取：
+
+- `provider` → 填入 `--channel`
+- `chat_id` → 填入 `--to`（无需额外处理，直接使用原始值）
+
+示例（Discord DM）：
+```json
+{"chat_id": "channel:1485514207515512953", "channel": "discord", "provider": "discord"}
+```
+→ `--channel discord --to channel:1485514207515512953`
+
+### 用户确认
+
+提取到值后，**必须询问用户确认推送目标**：
 
 ```
-"当前对话通道：{channel}，目标用户：{sender_id}
-推送目标使用当前通道和用户，还是指定其他对象？"
+"提取到当前对话：channel={provider}, to={chat_id}
+推送目标使用当前通道，还是指定其他？"
 ```
 
-### 安装
+根据用户回复确定最终值。如果当前 session 无 inbound metadata，必须询问用户。
 
-根据用户回复确定最终值：
-- 用户确认当前通道 → 直接使用提取到的值
-- 用户指定其他对象 → 使用用户提供的 `--channel` 和 `--to`
-
-记录最终值，后续 Step 4 创建 cron 时使用。
-
-> ⚠️ 如果当前 session 没有 inbound metadata（如纯 CLI 环境），必须询问用户提供 `channel` 和 `to`。
+> **参考文档**：OpenClaw cron delivery 配置详见 `/app/docs/automation/cron-jobs.md`
 
 ## Step 3: 安装辅助脚本
 
