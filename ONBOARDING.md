@@ -145,7 +145,7 @@ openclaw cron add \
   --to <TO_ID> \
   --announce \
   --timeout-seconds 180 \
-  --message "执行 KinemaTasks 每日早报推送。读取 ~/.openclaw/workspace/skills/kinema-task-management/SKILL.md 了解完整规范。1) 读取 ~/.openclaw/workspace/kinema-tasks/snapshots/ 中最近一次快照文件（按文件名日期倒序取最新的）2) 扫描 ~/.openclaw/workspace/kinema-tasks/active/ 所有 TASK-*.md 读取 Metadata（标题、状态、优先级、领域、截止日期）3) 对比最近快照与当前 active 状态生成 diff（新增、状态变更、字段变更、取消）4) 扫描 ~/.openclaw/workspace/kinema-tasks/archived/ 获取最近 5 条状态为 Done 的任务 5) 按 SKILL.md 中的推送格式生成完整报告。注意：如果没有最近快照则跳过 diff 部分。日期使用北京时间。"
+  --message "执行 KinemaTasks 每日早报推送。读取 ~/.openclaw/workspace/skills/kinema-task-management/SKILL.md 了解完整规范。1) 调用 ~/.openclaw/workspace/skills/kinema-task-management/scripts/report.sh 获取结构化报告内容（不含摘要）2) 根据报告内容撰写 2-3 句话的状况摘要（新增/完成数量、紧急提醒、过期提醒等，非固定模板）3) 将摘要插入报告标题下方，组装完整报告 4) 直接发送完整报告到对话。注意：如果没有最近快照则跳过 diff 部分。日期使用北京时间。"
 ```
 
 #### 4.3 写入快照（每天 09:02 北京时间）

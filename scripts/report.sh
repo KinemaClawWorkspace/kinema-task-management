@@ -194,37 +194,6 @@ done <<< "$tasks_data"
 echo "📋 KinemaTasks Daily Report — ${TODAY_DISPLAY}"
 echo ""
 
-# Status summary (2-3 sentences)
-expired_count=${#expired_list[@]}
-urg_with_due=0
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  key=$(echo "$line" | cut -d'|' -f1)
-  [ "$key" -lt 999999999 ] 2>/dev/null && urg_with_due=$((urg_with_due + 1))
-done <<< "$(printf '%s\n' "${urgent_list[@]}")"
-
-done_today_count=$(echo -e "$done_list" | grep -c . 2>/dev/null || echo 0)
-[ -z "$done_list" ] && done_today_count=0
-
-summary_parts=""
-if [ "$total" -eq 0 ]; then
-  echo "当前没有活跃任务，一切清闲。"
-else
-  summary_parts="当前共 ${total} 个活跃任务"
-  if [ "$in_progress" -gt 0 ]; then
-    summary_parts="${summary_parts}，${in_progress} 个进行中"
-  fi
-  if [ "$expired_count" -gt 0 ]; then
-    summary_parts="${summary_parts}，${expired_count} 个已过期需要关注"
-  fi
-  if [ "$urg_with_due" -gt 0 ]; then
-    summary_parts="${summary_parts}，有紧急任务即将到期"
-  fi
-  summary_parts="${summary_parts}。"
-  echo "$summary_parts"
-fi
-echo ""
-
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📋 当前任务状况"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
