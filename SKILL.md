@@ -1,7 +1,7 @@
 ---
 name: kinema-task-management
 displayName: "Kinema's Task Management (daily report, active push, traceback)"
-version: 1.0.0
+version: 1.1.0
 description: |
   Kinema personal task tracking system. AI Agent maintains tasks as markdown files in workspace.
   Trigger: User describes tasks, mentions "任务", "task", asks to create/update/archive/check tasks, uses `/mytask`, or receives task-related cron heartbeat.
@@ -380,7 +380,7 @@ Status: ▶ in_progress ○ pending ✓ done
 | 每日早报 | 09:01 | `kinema-tasks-daily-report` | 读取最近快照 + 当前 active 生成 diff + 报告，推送到对话 |
 | 写入快照 | 09:02 | `kinema-tasks-write-snapshot` | 扫描 active/ 生成快照写入 snapshots/YYYY-MM-DD.md |
 
-> 三个 cron 使用 `--session isolated` + `--announce`，详见 ONBOARDING.md Step 3。
+> 三个 cron 使用 `--session isolated` + `--channel` + `--to` + `--announce`，配置步骤详见 ONBOARDING.md Step 2（确定推送通道）和 Step 4（创建 cron 任务）。
 > 严格按顺序执行：归档检查 → 早报推送 → 写入快照
 
 ---
