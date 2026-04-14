@@ -1,5 +1,7 @@
 # Kinema's Task Management | Kinema 个人任务追踪系统
 
+> 该解法非常不优雅，尝试构建真正方便查看修改的解法。说到底 OpenClaw 本身不是完成 daily task 全功能的合适的渠道。
+
 AI Agent 维护的个人任务追踪系统，基于 Markdown 文件持久化存储。
 
 ## 功能
